@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # App
     FRONTEND_URL: str = "http://localhost"
     ENVIRONMENT: str = "production"
+    HTTPS_ENABLED: bool = False
     APP_NAME: str = "VereinsKasse"
     APP_VERSION: str = "1.0.0"
 
