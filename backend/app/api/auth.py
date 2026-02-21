@@ -59,8 +59,8 @@ async def register(user_data: UserCreate, response: Response, db: AsyncSession =
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
-    response.set_cookie("access_token", access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
-    response.set_cookie("refresh_token", refresh_token, max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400, **COOKIE_SETTINGS)
+    response.set_cookie("vk_access_token", access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
+    response.set_cookie("vk_refresh_token", refresh_token, max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400, **COOKIE_SETTINGS)
 
     return user
 
@@ -79,8 +79,8 @@ async def login(login_data: LoginRequest, response: Response, db: AsyncSession =
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
-    response.set_cookie("access_token", access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
-    response.set_cookie("refresh_token", refresh_token, max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400, **COOKIE_SETTINGS)
+    response.set_cookie("vk_access_token", access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
+    response.set_cookie("vk_refresh_token", refresh_token, max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400, **COOKIE_SETTINGS)
 
     return {
         "user": {
@@ -91,7 +91,7 @@ async def login(login_data: LoginRequest, response: Response, db: AsyncSession =
             "organization_name": user.organization_name,
             "subscription_tier": user.subscription_tier,
         },
-        "access_token": access_token,
+        "vk_access_token": access_token,
     }
 
 
@@ -116,15 +116,15 @@ async def refresh_token(
         raise HTTPException(status_code=401, detail="Benutzer nicht gefunden")
 
     new_access_token = create_access_token({"sub": str(user.id), "role": user.role})
-    response.set_cookie("access_token", new_access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
+    response.set_cookie("vk_access_token", new_access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **COOKIE_SETTINGS)
 
-    return {"access_token": new_access_token}
+    return {"vk_access_token": new_access_token}
 
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    response.delete_cookie("vk_access_token")
+    response.delete_cookie("vk_refresh_token")
     return {"message": "Erfolgreich abgemeldet"}
 
 
