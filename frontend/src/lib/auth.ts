@@ -49,8 +49,15 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await authApi.me()
           set({ user: response.data, isAuthenticated: true, isLoading: false })
-        } catch {
-          set({ user: null, isAuthenticated: false, isLoading: false })
+        } catch (error: unknown) {
+          const status = (error as { response?: { status?: number } })?.response?.status
+          if (status === 401 || status === 403) {
+            // Only log out on explicit auth errors, not network issues
+            set({ user: null, isAuthenticated: false, isLoading: false })
+          } else {
+            // Network error etc. - keep existing auth state
+            set({ isLoading: false })
+          }
         }
       },
     }),

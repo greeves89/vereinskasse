@@ -11,19 +11,34 @@ const api: AxiosInstance = axios.create({
 })
 
 // Response interceptor for auth errors
+let isRefreshing = false
+
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      try {
-        await api.post('/auth/refresh')
-        return api.request(error.config!)
-      } catch {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login'
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean }
+
+    // Only try refresh once, and not on auth endpoints themselves
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !originalRequest?.url?.includes('/auth/')
+    ) {
+      originalRequest!._retry = true
+
+      if (!isRefreshing) {
+        isRefreshing = true
+        try {
+          await api.post('/auth/refresh')
+          isRefreshing = false
+          return api.request(originalRequest!)
+        } catch {
+          isRefreshing = false
+          // Refresh failed - let the auth store handle redirect via fetchUser
         }
       }
     }
+
     return Promise.reject(error)
   }
 )
