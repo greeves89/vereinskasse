@@ -7,9 +7,10 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { useAuthStore } from '@/lib/auth'
 import { usersApi, gdprApi } from '@/lib/api'
+import api from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import {
-  User, Lock, Shield, Download, Trash2, Crown, Check, AlertTriangle,
+  User, Lock, Shield, Download, Trash2, Crown, Check, AlertTriangle, Loader2, X,
 } from 'lucide-react'
 
 function SettingsContent() {
@@ -30,6 +31,8 @@ function SettingsContent() {
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [upgrading, setUpgrading] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,6 +72,36 @@ function SettingsContent() {
     }
   }
 
+  const handleUpgrade = async () => {
+    setUpgrading(true)
+    setError('')
+    try {
+      const response = await api.post('/stripe/create-checkout-session')
+      const { checkout_url } = response.data
+      window.location.href = checkout_url
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      setError(error.response?.data?.detail || 'Fehler beim Starten des Checkout')
+      setUpgrading(false)
+    }
+  }
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('Abonnement wirklich kündigen? Es bleibt bis zum Ende der Laufzeit aktiv.')) return
+    setCancelling(true)
+    setError('')
+    try {
+      await api.post('/stripe/cancel-subscription')
+      await fetchUser()
+      alert('Ihr Abonnement wird am Ende der Laufzeit gekündigt.')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      setError(error.response?.data?.detail || 'Fehler beim Kündigen')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   const handleExportData = async () => {
     try {
       const response = await gdprApi.exportData()
@@ -100,6 +133,8 @@ function SettingsContent() {
       alert(error.response?.data?.detail || 'Fehler beim Löschen des Kontos')
     }
   }
+
+  const isPremium = user?.subscription_tier === 'premium'
 
   return (
     <div className="flex h-screen bg-background">
@@ -250,48 +285,81 @@ function SettingsContent() {
               <h2 className="text-base font-semibold text-foreground">Abonnement</h2>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 mb-4">
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  Aktueller Plan: <span className={user?.subscription_tier === 'premium' ? 'text-warning' : 'text-muted-foreground'}>
-                    {user?.subscription_tier === 'premium' ? 'Premium' : 'Kostenlos'}
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-sm font-medium text-foreground">Aktueller Plan:</p>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${isPremium ? 'bg-warning/20 text-warning' : 'bg-secondary text-muted-foreground'}`}>
+                    {isPremium ? 'Premium' : 'Kostenlos'}
                   </span>
-                </p>
-                {user?.subscription_tier === 'free' && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                </div>
+                {!isPremium && (
+                  <p className="text-xs text-muted-foreground">
                     Bis zu 50 Mitglieder, Kassenbuch und Kategorien
                   </p>
                 )}
-                {user?.subscription_tier === 'premium' && user?.subscription_expires_at && (
-                  <p className="text-xs text-muted-foreground mt-1">
+                {isPremium && user?.subscription_expires_at && (
+                  <p className="text-xs text-muted-foreground">
                     Läuft ab: {new Date(user.subscription_expires_at).toLocaleDateString('de-DE')}
                   </p>
                 )}
               </div>
-              {user?.subscription_tier === 'free' && (
-                <button className="px-4 py-2 rounded-lg bg-warning text-black text-sm font-medium hover:bg-warning/90 transition-colors">
-                  Auf Premium upgraden
-                </button>
-              )}
+              <div className="flex gap-2">
+                {!isPremium && (
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={upgrading}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-warning text-black text-sm font-medium hover:bg-warning/90 disabled:opacity-50 transition-colors"
+                  >
+                    {upgrading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crown className="w-4 h-4" />}
+                    {upgrading ? 'Weiterleitung...' : 'Jetzt upgraden – 0,99€/Monat'}
+                  </button>
+                )}
+                {isPremium && (
+                  <button
+                    onClick={handleCancelSubscription}
+                    disabled={cancelling}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 disabled:opacity-50 transition-colors"
+                  >
+                    {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                    {cancelling ? 'Kündige...' : 'Abonnement kündigen'}
+                  </button>
+                )}
+              </div>
             </div>
 
-            {user?.subscription_tier === 'free' && (
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {[
-                  'Unlimitierte Mitglieder',
-                  'DATEV-Export (CSV)',
-                  'Jahresabschluss als PDF',
-                  'Zahlungserinnerungen',
-                  'E-Mail an Mitglieder',
-                  'Prioritäts-Support',
-                ].map((feature) => (
-                  <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="w-4 h-4 text-warning flex-shrink-0" />
-                    {feature}
-                  </div>
-                ))}
+            {/* Features comparison */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg border border-border bg-secondary/20">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Kostenlos</p>
+                <ul className="space-y-2">
+                  {['Bis zu 50 Mitglieder', 'Kassenbuch', 'Kategorien', 'Grundberichte'].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Check className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
+              <div className={`p-4 rounded-lg border ${isPremium ? 'border-warning/40 bg-warning/5' : 'border-border bg-secondary/20'}`}>
+                <p className="text-xs font-semibold text-warning uppercase tracking-wide mb-3">Premium – 0,99€/Monat</p>
+                <ul className="space-y-2">
+                  {[
+                    'Unlimitierte Mitglieder',
+                    'DATEV-Export (CSV)',
+                    'Jahresabschluss als PDF',
+                    'Zahlungserinnerungen',
+                    'E-Mail an Mitglieder',
+                    'Prioritäts-Support',
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-center gap-2 text-xs text-foreground">
+                      <Check className="w-3.5 h-3.5 text-warning flex-shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </motion.div>
 
           {/* DSGVO */}

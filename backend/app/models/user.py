@@ -18,6 +18,8 @@ class User(Base):
     organization_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     subscription_tier: Mapped[str] = mapped_column(String(50), default="free", nullable=False)
     subscription_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    stripe_subscription_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

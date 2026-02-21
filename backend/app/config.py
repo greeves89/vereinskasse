@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     FREE_MEMBER_LIMIT: int = 50
     PREMIUM_PRICE: float = 0.99
 
+    # Stripe
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_ID: str = ""
+    STRIPE_SUCCESS_URL: str = "http://localhost/dashboard?upgraded=true"
+    STRIPE_CANCEL_URL: str = "http://localhost/settings?cancelled=true"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
