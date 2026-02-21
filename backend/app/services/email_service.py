@@ -11,7 +11,92 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# ─────────────────────────────────────────────
+# Design tokens (inline CSS for email clients)
+# ─────────────────────────────────────────────
+PRIMARY        = "#3b82f6"
+PRIMARY_DARK   = "#2563eb"
+BG             = "#f1f5f9"
+CARD           = "#ffffff"
+TEXT           = "#0f172a"
+TEXT_MUTED     = "#64748b"
+BORDER         = "#e2e8f0"
+WARNING_BG     = "#fffbeb"
+WARNING_BORDER = "#fde68a"
+WARNING_TEXT   = "#92400e"
+FONT           = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 
+
+def _email_wrapper(content: str, app_name: str = "VereinsKasse", tagline: str = "Kassenverwaltung für Ihren Verein") -> str:
+    year = datetime.now().year
+    return f"""<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>{app_name}</title>
+</head>
+<body style="margin:0;padding:0;background-color:{BG};font-family:{FONT};-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{BG};min-height:100vh;">
+  <tr><td align="center" style="padding:40px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;">
+
+      <!-- HEADER -->
+      <tr>
+        <td style="background:linear-gradient(135deg,{PRIMARY} 0%,{PRIMARY_DARK} 100%);border-radius:16px 16px 0 0;padding:28px 36px;">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:rgba(255,255,255,0.18);border-radius:10px;width:42px;height:42px;text-align:center;vertical-align:middle;font-size:20px;">📊</td>
+              <td style="padding-left:12px;vertical-align:middle;">
+                <p style="margin:0;color:#fff;font-size:18px;font-weight:700;letter-spacing:-0.2px;">{app_name}</p>
+                <p style="margin:0;color:rgba(255,255,255,0.72);font-size:12px;">{tagline}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- BODY -->
+      <tr>
+        <td style="background:{CARD};padding:36px;border-left:1px solid {BORDER};border-right:1px solid {BORDER};">
+          {content}
+        </td>
+      </tr>
+
+      <!-- FOOTER -->
+      <tr>
+        <td style="background:#f8fafc;border:1px solid {BORDER};border-top:none;border-radius:0 0 16px 16px;padding:20px 36px;">
+          <p style="margin:0 0 6px;color:{TEXT_MUTED};font-size:12px;">Diese E-Mail wurde von <strong>{app_name}</strong> automatisch versandt.</p>
+          <p style="margin:0;color:{TEXT_MUTED};font-size:12px;">
+            &copy; {year} {app_name}&nbsp;&middot;&nbsp;
+            <a href="{settings.FRONTEND_URL}/impressum" style="color:{PRIMARY};text-decoration:none;">Impressum</a>&nbsp;&middot;&nbsp;
+            <a href="{settings.FRONTEND_URL}/datenschutz" style="color:{PRIMARY};text-decoration:none;">Datenschutz</a>
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>"""
+
+
+def _btn(url: str, label: str) -> str:
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px auto;">
+  <tr>
+    <td style="border-radius:10px;background:linear-gradient(135deg,{PRIMARY} 0%,{PRIMARY_DARK} 100%);">
+      <a href="{url}" style="display:inline-block;padding:13px 30px;color:#fff;font-size:15px;font-weight:600;text-decoration:none;border-radius:10px;">{label}</a>
+    </td>
+  </tr>
+</table>"""
+
+
+def _divider() -> str:
+    return f'<div style="height:1px;background:{BORDER};margin:28px 0;"></div>'
+
+
+# ─────────────────────────────────────────────
 async def send_email(
     db: AsyncSession,
     recipient: str,
@@ -21,11 +106,7 @@ async def send_email(
     attachment: Optional[bytes] = None,
     attachment_filename: Optional[str] = None,
 ) -> bool:
-    log_entry = EmailLog(
-        recipient=recipient,
-        subject=subject,
-        status="pending",
-    )
+    log_entry = EmailLog(recipient=recipient, subject=subject, status="pending")
     db.add(log_entry)
     await db.flush()
 
@@ -74,45 +155,108 @@ async def send_email(
         return False
 
 
+# ─────────────────────────────────────────────
+# Template: Willkommen
+# ─────────────────────────────────────────────
 def build_welcome_email(name: str, organization: str) -> tuple[str, str]:
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
-        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h1 style="color: #3b82f6; margin-bottom: 8px;">Willkommen bei VereinsKasse!</h1>
-            <p style="color: #6b7280; margin-bottom: 24px;">Die Kassenverwaltung für Ihren Verein</p>
-            
-            <p>Hallo {name},</p>
-            <p>herzlich willkommen bei <strong>VereinsKasse</strong>! Ihr Konto für <em>{organization}</em> wurde erfolgreich erstellt.</p>
-            
-            <h3 style="color: #374151;">Was Sie jetzt tun können:</h3>
-            <ul style="color: #4b5563; line-height: 1.8;">
-                <li>Mitglieder verwalten (bis zu 50 im kostenlosen Plan)</li>
-                <li>Einnahmen und Ausgaben im Kassenbuch erfassen</li>
-                <li>Kategorien anlegen und Statistiken einsehen</li>
-                <li>Mit Premium unlimitierte Mitglieder und PDF-Exporte</li>
-            </ul>
-            
-            <div style="text-align: center; margin: 32px 0;">
-                <a href="{settings.FRONTEND_URL}/dashboard" 
-                   style="background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                    Zum Dashboard
-                </a>
-            </div>
-            
-            <p style="color: #9ca3af; font-size: 14px; margin-top: 32px;">
-                Falls Sie Fragen haben, nutzen Sie die Feedback-Funktion in der App.
-            </p>
-        </div>
-    </body>
-    </html>
-    """
-    text = f"Willkommen bei VereinsKasse, {name}! Ihr Konto für {organization} wurde erstellt. Login: {settings.FRONTEND_URL}"
+    features = [
+        ("Kassenbuch", "Einnahmen &amp; Ausgaben erfassen, kategorisieren, exportieren"),
+        ("Mitglieder", "Bis zu 50 Mitglieder kostenlos verwalten"),
+        ("Statistiken", "Dashboard mit Finanzen &amp; Aktivitäten"),
+        ("Premium", "Unlimitierte Mitglieder &amp; PDF-Export ab 0,99&nbsp;€/Monat"),
+    ]
+
+    rows = ""
+    for title, desc in features:
+        rows += f"""
+        <tr>
+          <td style="padding:8px 0;vertical-align:top;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align:top;padding-top:2px;">
+                  <span style="display:inline-block;width:18px;height:18px;background:#dbeafe;border-radius:50%;text-align:center;font-size:10px;line-height:18px;color:{PRIMARY};font-weight:700;">✓</span>
+                </td>
+                <td style="padding-left:10px;">
+                  <p style="margin:0;font-size:14px;font-weight:600;color:{TEXT};">{title}</p>
+                  <p style="margin:2px 0 0;font-size:13px;color:{TEXT_MUTED};">{desc}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>"""
+
+    content = f"""
+<h1 style="margin:0 0 6px;font-size:26px;font-weight:700;color:{TEXT};letter-spacing:-0.5px;">Herzlich willkommen, {name}! 👋</h1>
+<p style="margin:0 0 28px;color:{TEXT_MUTED};font-size:15px;">Ihr Konto für <strong style="color:{TEXT};">{organization}</strong> ist bereit.</p>
+
+<p style="margin:0 0 20px;color:{TEXT};font-size:15px;line-height:1.7;">
+  Schön, dass Sie sich für <strong>VereinsKasse</strong> entschieden haben!
+  Sie können jetzt sofort loslegen und Ihre Vereinsfinanzen verwalten.
+</p>
+
+<div style="background:#f8fafc;border:1px solid {BORDER};border-radius:12px;padding:18px 22px;margin:0 0 8px;">
+  <p style="margin:0 0 14px;color:{TEXT_MUTED};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;">Was Sie jetzt tun können</p>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    {rows}
+  </table>
+</div>
+
+{_btn(f"{settings.FRONTEND_URL}/dashboard", "Zum Dashboard →")}
+
+{_divider()}
+
+<p style="margin:0;color:{TEXT_MUTED};font-size:13px;line-height:1.6;">
+  Fragen oder Feedback? Nutzen Sie die <strong>Feedback-Funktion</strong> direkt in der App –
+  wir helfen Ihnen gerne weiter.
+</p>"""
+
+    html = _email_wrapper(content)
+    text = f"Willkommen bei VereinsKasse, {name}! Ihr Konto fuer {organization} ist bereit. Login: {settings.FRONTEND_URL}/dashboard"
     return html, text
 
 
+# ─────────────────────────────────────────────
+# Template: Passwort zurücksetzen
+# ─────────────────────────────────────────────
+def build_password_reset_email(name: str, reset_url: str) -> tuple[str, str]:
+    content = f"""
+<div style="text-align:center;margin-bottom:24px;">
+  <div style="display:inline-block;background:#eff6ff;border-radius:50%;width:60px;height:60px;line-height:60px;font-size:26px;">🔐</div>
+</div>
+
+<h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:{TEXT};text-align:center;letter-spacing:-0.3px;">Passwort zurücksetzen</h1>
+<p style="margin:0 0 28px;color:{TEXT_MUTED};font-size:13px;text-align:center;">VereinsKasse &middot; Sicherheitsanfrage</p>
+
+<p style="margin:0 0 16px;color:{TEXT};font-size:15px;line-height:1.7;">Hallo <strong>{name}</strong>,</p>
+<p style="margin:0 0 24px;color:{TEXT_MUTED};font-size:15px;line-height:1.7;">
+  wir haben eine Anfrage erhalten, das Passwort für Ihr VereinsKasse-Konto zurückzusetzen.
+  Klicken Sie auf den Button, um ein neues Passwort zu vergeben:
+</p>
+
+{_btn(reset_url, "Passwort zurücksetzen →")}
+
+<div style="background:{WARNING_BG};border:1px solid {WARNING_BORDER};border-radius:10px;padding:14px 18px;margin:0 0 24px;">
+  <p style="margin:0;color:{WARNING_TEXT};font-size:13px;line-height:1.6;">
+    ⏱&nbsp; <strong>Dieser Link ist nur 1 Stunde gültig.</strong><br>
+    Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail einfach ignorieren – Ihr Passwort bleibt unverändert.
+  </p>
+</div>
+
+{_divider()}
+
+<p style="margin:0;color:{TEXT_MUTED};font-size:12px;line-height:1.6;">
+  Wenn der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:<br>
+  <a href="{reset_url}" style="color:{PRIMARY};word-break:break-all;">{reset_url}</a>
+</p>"""
+
+    html = _email_wrapper(content)
+    text = f"Hallo {name}, setzen Sie Ihr Passwort zurueck: {reset_url} (gueltig fuer 1 Stunde). Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail."
+    return html, text
+
+
+# ─────────────────────────────────────────────
+# Template: Zahlungserinnerung
+# ─────────────────────────────────────────────
 def build_payment_reminder_email(
     member_name: str,
     organization: str,
@@ -120,76 +264,72 @@ def build_payment_reminder_email(
     due_date: str,
     notes: Optional[str] = None,
 ) -> tuple[str, str]:
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
-        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h1 style="color: #f59e0b;">Zahlungserinnerung</h1>
-            <p style="color: #6b7280;">von {organization}</p>
-            
-            <p>Sehr geehrte/r {member_name},</p>
-            <p>wir möchten Sie freundlich daran erinnern, dass folgende Zahlung aussteht:</p>
-            
-            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #374151; font-weight: bold;">Betrag:</span>
-                    <span style="color: #374151; font-size: 20px; font-weight: bold;">{amount:.2f} €</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #374151; font-weight: bold;">Fälligkeitsdatum:</span>
-                    <span style="color: #374151;">{due_date}</span>
-                </div>
-                {f'<p style="color: #6b7280; margin-top: 12px; margin-bottom: 0;">{notes}</p>' if notes else ''}
-            </div>
-            
-            <p>Bitte überweisen Sie den fälligen Betrag auf unser Vereinskonto.</p>
-            <p>Falls Sie bereits gezahlt haben, bitten wir Sie, diese E-Mail zu ignorieren.</p>
-            
-            <p style="margin-top: 32px;">Mit freundlichen Grüßen,<br><strong>{organization}</strong></p>
-        </div>
-    </body>
-    </html>
-    """
-    text = f"Zahlungserinnerung von {organization}: {amount:.2f} € fällig am {due_date}."
+    notes_block = ""
+    if notes:
+        notes_block = f"""
+        <tr>
+          <td colspan="2" style="padding-top:14px;border-top:1px solid {WARNING_BORDER};">
+            <p style="margin:0;color:{WARNING_TEXT};font-size:13px;">{notes}</p>
+          </td>
+        </tr>"""
+
+    content = f"""
+<div style="text-align:center;margin-bottom:24px;">
+  <div style="display:inline-block;background:{WARNING_BG};border-radius:50%;width:60px;height:60px;line-height:60px;font-size:26px;">💰</div>
+</div>
+
+<h1 style="margin:0 0 4px;font-size:24px;font-weight:700;color:{TEXT};text-align:center;letter-spacing:-0.3px;">Zahlungserinnerung</h1>
+<p style="margin:0 0 28px;color:{TEXT_MUTED};font-size:13px;text-align:center;">von <strong style="color:{TEXT};">{organization}</strong></p>
+
+<p style="margin:0 0 16px;color:{TEXT};font-size:15px;line-height:1.7;">Sehr geehrte/r <strong>{member_name}</strong>,</p>
+<p style="margin:0 0 22px;color:{TEXT_MUTED};font-size:15px;line-height:1.7;">
+  wir möchten Sie freundlich daran erinnern, dass folgender Mitgliedsbeitrag noch aussteht:
+</p>
+
+<div style="background:{WARNING_BG};border:1px solid {WARNING_BORDER};border-radius:14px;padding:22px 24px;margin:0 0 22px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="color:{WARNING_TEXT};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;padding-bottom:10px;">Offener Betrag</td>
+      <td style="text-align:right;padding-bottom:10px;">
+        <span style="font-size:36px;font-weight:800;color:{TEXT};letter-spacing:-1px;">{amount:.2f}&nbsp;€</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="height:1px;background:{WARNING_BORDER};padding:0;"></td>
+    </tr>
+    <tr>
+      <td style="padding-top:10px;color:{TEXT_MUTED};font-size:13px;">Fälligkeitsdatum</td>
+      <td style="padding-top:10px;text-align:right;color:{TEXT};font-size:14px;font-weight:600;">{due_date}</td>
+    </tr>
+    {notes_block}
+  </table>
+</div>
+
+<p style="margin:0 0 14px;color:{TEXT_MUTED};font-size:14px;line-height:1.7;">
+  Bitte überweisen Sie den ausstehenden Betrag auf das Vereinskonto.
+  Falls Sie bereits gezahlt haben, bitten wir Sie, diese E-Mail zu ignorieren.
+</p>
+
+<p style="margin:0 0 28px;color:{TEXT};font-size:15px;line-height:1.7;">
+  Mit freundlichen Grüßen,<br>
+  <strong>{organization}</strong>
+</p>
+
+{_divider()}
+
+<p style="margin:0;color:{TEXT_MUTED};font-size:12px;">
+  Diese Erinnerung wurde von <strong>{organization}</strong> über VereinsKasse verschickt.
+  Bei Fragen wenden Sie sich bitte direkt an Ihren Verein.
+</p>"""
+
+    html = _email_wrapper(content, app_name=organization, tagline="Zahlungserinnerung")
+    text = f"Zahlungserinnerung von {organization} an {member_name}: {amount:.2f} EUR faellig am {due_date}."
     return html, text
 
 
-def build_password_reset_email(name: str, reset_url: str) -> tuple[str, str]:
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
-        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h1 style="color: #3b82f6; margin-bottom: 8px;">Passwort zurücksetzen</h1>
-            <p style="color: #6b7280; margin-bottom: 24px;">VereinsKasse</p>
-
-            <p>Hallo {name},</p>
-            <p>Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den folgenden Button, um ein neues Passwort zu vergeben:</p>
-
-            <div style="text-align: center; margin: 32px 0;">
-                <a href="{reset_url}"
-                   style="background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                    Passwort zurücksetzen
-                </a>
-            </div>
-
-            <p style="color: #6b7280; font-size: 14px;">Dieser Link ist <strong>1 Stunde</strong> gültig.</p>
-            <p style="color: #6b7280; font-size: 14px;">Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
-
-            <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-                Aus Sicherheitsgründen wird dieser Link nach 1 Stunde automatisch ungültig.
-            </p>
-        </div>
-    </body>
-    </html>
-    """
-    text = f"Hallo {name}, setzen Sie Ihr Passwort zurück: {reset_url} (gültig für 1 Stunde)"
-    return html, text
-
-
+# ─────────────────────────────────────────────
+# Template: Feedback-Antwort
+# ─────────────────────────────────────────────
 def build_feedback_response_email(
     user_name: str,
     feedback_title: str,
@@ -197,37 +337,62 @@ def build_feedback_response_email(
     admin_response: str,
     status: str,
 ) -> tuple[str, str]:
-    status_labels = {"approved": "angenommen", "rejected": "abgelehnt", "in_review": "in Bearbeitung"}
-    status_colors = {"approved": "#10b981", "rejected": "#ef4444", "in_review": "#f59e0b"}
-    status_label = status_labels.get(status, status)
-    status_color = status_colors.get(status, "#6b7280")
+    status_cfg = {
+        "approved":  {"label": "Angenommen",     "color": "#16a34a", "bg": "#f0fdf4", "border": "#bbf7d0", "icon": "✅"},
+        "rejected":  {"label": "Abgelehnt",      "color": "#dc2626", "bg": "#fef2f2", "border": "#fecaca", "icon": "❌"},
+        "in_review": {"label": "In Bearbeitung", "color": "#d97706", "bg": "#fffbeb", "border": "#fde68a", "icon": "🔍"},
+    }
+    cfg = status_cfg.get(status, {"label": status, "color": TEXT_MUTED, "bg": "#f8fafc", "border": BORDER, "icon": "📋"})
 
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
-        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h1 style="color: #3b82f6;">Antwort auf Ihr Feedback</h1>
-            
-            <p>Hallo {user_name},</p>
-            <p>Ihr Feedback wurde bearbeitet:</p>
-            
-            <div style="background: #f9fafb; border-left: 4px solid {status_color}; padding: 16px; margin: 24px 0; border-radius: 0 8px 8px 0;">
-                <p style="margin: 0 0 8px; color: #374151;"><strong>Titel:</strong> {feedback_title}</p>
-                <p style="margin: 0 0 8px; color: #374151;"><strong>Typ:</strong> {feedback_type}</p>
-                <p style="margin: 0; color: {status_color};"><strong>Status:</strong> {status_label}</p>
-            </div>
-            
-            <h3 style="color: #374151;">Antwort des Teams:</h3>
-            <p style="color: #4b5563; background: #f9fafb; padding: 16px; border-radius: 8px;">{admin_response}</p>
-            
-            <p style="color: #9ca3af; font-size: 14px; margin-top: 32px;">
-                Vielen Dank für Ihr Feedback - es hilft uns, VereinsKasse besser zu machen!
-            </p>
-        </div>
-    </body>
-    </html>
-    """
-    text = f"Antwort auf Ihr Feedback '{feedback_title}': Status={status_label}. {admin_response}"
+    type_labels = {"bug": "Fehlermeldung", "feature": "Feature-Wunsch", "general": "Allgemeines Feedback"}
+    type_label = type_labels.get(feedback_type, feedback_type)
+
+    content = f"""
+<div style="text-align:center;margin-bottom:24px;">
+  <div style="display:inline-block;background:#eff6ff;border-radius:50%;width:60px;height:60px;line-height:60px;font-size:26px;">💬</div>
+</div>
+
+<h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:{TEXT};text-align:center;letter-spacing:-0.3px;">Antwort auf Ihr Feedback</h1>
+<p style="margin:0 0 28px;color:{TEXT_MUTED};font-size:13px;text-align:center;">Das VereinsKasse-Team hat Ihre Nachricht bearbeitet</p>
+
+<p style="margin:0 0 20px;color:{TEXT};font-size:15px;line-height:1.7;">Hallo <strong>{user_name}</strong>,</p>
+<p style="margin:0 0 22px;color:{TEXT_MUTED};font-size:15px;line-height:1.7;">
+  vielen Dank für Ihr Feedback! Hier ist die Rückmeldung unseres Teams:
+</p>
+
+<div style="background:#f8fafc;border:1px solid {BORDER};border-radius:12px;padding:18px 22px;margin:0 0 18px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td style="padding:4px 0;color:{TEXT_MUTED};font-size:13px;width:90px;">Betreff</td>
+      <td style="padding:4px 0;color:{TEXT};font-size:13px;font-weight:600;">{feedback_title}</td>
+    </tr>
+    <tr>
+      <td style="padding:4px 0;color:{TEXT_MUTED};font-size:13px;">Typ</td>
+      <td style="padding:4px 0;color:{TEXT};font-size:13px;">{type_label}</td>
+    </tr>
+    <tr>
+      <td style="padding:10px 0 0;color:{TEXT_MUTED};font-size:13px;vertical-align:top;">Status</td>
+      <td style="padding:10px 0 0;">
+        <span style="display:inline-block;background:{cfg['bg']};color:{cfg['color']};border:1px solid {cfg['border']};border-radius:20px;padding:2px 12px;font-size:12px;font-weight:600;">
+          {cfg['icon']}&nbsp;{cfg['label']}
+        </span>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div style="border-left:3px solid {PRIMARY};padding:14px 18px;background:#f8fafc;border-radius:0 10px 10px 0;margin:0 0 28px;">
+  <p style="margin:0 0 6px;color:{TEXT_MUTED};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Antwort des Teams</p>
+  <p style="margin:0;color:{TEXT};font-size:14px;line-height:1.7;">{admin_response}</p>
+</div>
+
+{_divider()}
+
+<p style="margin:0;color:{TEXT_MUTED};font-size:13px;line-height:1.6;">
+  Haben Sie weiteres Feedback? Schreiben Sie uns über die <strong>Feedback-Funktion</strong> in der App.<br>
+  Vielen Dank &ndash; Ihr VereinsKasse-Team 🙏
+</p>"""
+
+    html = _email_wrapper(content)
+    text = f"Hallo {user_name}, Ihr Feedback '{feedback_title}' wurde bearbeitet. Status: {cfg['label']}. Antwort: {admin_response}"
     return html, text
