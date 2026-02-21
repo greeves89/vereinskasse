@@ -99,12 +99,12 @@ async def login(login_data: LoginRequest, response: Response, db: AsyncSession =
 async def refresh_token(
     response: Response,
     db: AsyncSession = Depends(get_db),
-    refresh_token: Optional[str] = Cookie(default=None),
+    vk_refresh_token: Optional[str] = Cookie(default=None),
 ):
-    if not refresh_token:
+    if not vk_refresh_token:
         raise HTTPException(status_code=401, detail="Kein Refresh-Token")
 
-    payload = decode_token(refresh_token)
+    payload = decode_token(vk_refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(status_code=401, detail="Ungültiger Refresh-Token")
 

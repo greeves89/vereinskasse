@@ -9,7 +9,7 @@ from app.core.security import decode_token
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    access_token: Optional[str] = Cookie(default=None),
+    vk_access_token: Optional[str] = Cookie(default=None),
     authorization: Optional[str] = Header(default=None),
 ) -> User:
     credentials_exception = HTTPException(
@@ -19,8 +19,8 @@ async def get_current_user(
     )
 
     token = None
-    if access_token:
-        token = access_token
+    if vk_access_token:
+        token = vk_access_token
     elif authorization and authorization.startswith("Bearer "):
         token = authorization[7:]
 
