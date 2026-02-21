@@ -117,12 +117,20 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Noch kein Konto?{' '}
-            <Link href="/register" className="text-primary hover:underline font-medium">
-              Jetzt registrieren
+          <div className="flex items-center justify-between mt-4">
+            <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              Passwort vergessen?
             </Link>
-          </p>
+            <Link href="/register" className="text-sm text-primary hover:underline font-medium">
+              Konto erstellen
+            </Link>
+          </div>
+
+          <div className="flex justify-center gap-4 mt-6 text-xs text-muted-foreground/60">
+            <Link href="/impressum" className="hover:text-muted-foreground">Impressum</Link>
+            <Link href="/datenschutz" className="hover:text-muted-foreground">Datenschutz</Link>
+            <Link href="/agb" className="hover:text-muted-foreground">AGB</Link>
+          </div>
         </motion.div>
       </div>
     </div>

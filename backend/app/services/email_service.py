@@ -156,6 +156,40 @@ def build_payment_reminder_email(
     return html, text
 
 
+def build_password_reset_email(name: str, reset_url: str) -> tuple[str, str]:
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f5f5f5;">
+        <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h1 style="color: #3b82f6; margin-bottom: 8px;">Passwort zurücksetzen</h1>
+            <p style="color: #6b7280; margin-bottom: 24px;">VereinsKasse</p>
+
+            <p>Hallo {name},</p>
+            <p>Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den folgenden Button, um ein neues Passwort zu vergeben:</p>
+
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="{reset_url}"
+                   style="background: #3b82f6; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    Passwort zurücksetzen
+                </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px;">Dieser Link ist <strong>1 Stunde</strong> gültig.</p>
+            <p style="color: #6b7280; font-size: 14px;">Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren.</p>
+
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+                Aus Sicherheitsgründen wird dieser Link nach 1 Stunde automatisch ungültig.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    text = f"Hallo {name}, setzen Sie Ihr Passwort zurück: {reset_url} (gültig für 1 Stunde)"
+    return html, text
+
+
 def build_feedback_response_email(
     user_name: str,
     feedback_title: str,

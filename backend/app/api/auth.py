@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
+import secrets
 
 from app.database import get_db
 from app.models.user import User
@@ -14,7 +15,7 @@ from app.core.security import (
 )
 from app.core.auth import get_current_user
 from app.config import settings
-from app.services.email_service import send_email, build_welcome_email
+from app.services.email_service import send_email, build_welcome_email, build_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,12 +28,10 @@ COOKIE_SETTINGS = {
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, response: Response, db: AsyncSession = Depends(get_db)):
-    # Check if email already exists
     result = await db.execute(select(User).where(User.email == user_data.email.lower()))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="E-Mail bereits registriert")
 
-    # Check if this is the first user (becomes admin)
     count_result = await db.execute(select(func.count(User.id)))
     user_count = count_result.scalar()
     role = "admin" if user_count == 0 else "member"
@@ -42,20 +41,19 @@ async def register(user_data: UserCreate, response: Response, db: AsyncSession =
         name=user_data.name,
         password_hash=get_password_hash(user_data.password),
         role=role,
+        is_verified=True,
         organization_name=user_data.organization_name or user_data.name + "s Verein",
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    # Send welcome email (non-blocking)
     try:
         html, text = build_welcome_email(user.name, user.organization_name or "")
-        await send_email(db, user.email, f"Willkommen bei VereinsKasse!", html, text)
+        await send_email(db, user.email, "Willkommen bei VereinsKasse!", html, text)
     except Exception:
         pass
 
-    # Set auth cookies
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
@@ -131,3 +129,51 @@ async def logout(response: Response):
 @router.get("/me", response_model=UserRead)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: dict, db: AsyncSession = Depends(get_db)):
+    email = data.get("email", "").lower()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    # Always return success to prevent email enumeration
+    if user and user.is_active:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expires = datetime.now(timezone.utc) + timedelta(hours=1)
+        await db.commit()
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        try:
+            html, text = build_password_reset_email(user.name, reset_url)
+            await send_email(db, user.email, "Passwort zurücksetzen – VereinsKasse", html, text)
+        except Exception:
+            pass
+
+    return {"message": "Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail gesendet."}
+
+
+@router.post("/reset-password")
+async def reset_password(data: dict, db: AsyncSession = Depends(get_db)):
+    token = data.get("token", "")
+    new_password = data.get("new_password", "")
+
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Passwort muss mindestens 8 Zeichen lang sein")
+
+    result = await db.execute(select(User).where(User.reset_token == token))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.reset_token_expires:
+        raise HTTPException(status_code=400, detail="Ungültiger oder abgelaufener Token")
+
+    if user.reset_token_expires < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Token abgelaufen – bitte erneut anfordern")
+
+    user.password_hash = get_password_hash(new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    await db.commit()
+
+    return {"message": "Passwort erfolgreich geändert"}

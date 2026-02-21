@@ -194,9 +194,16 @@ export default function RegisterPage() {
           </p>
 
           <p className="text-center text-xs text-muted-foreground/60 mt-4">
-            Mit der Registrierung stimmen Sie unseren Nutzungsbedingungen zu.
-            Der erste Nutzer wird automatisch Administrator.
+            Mit der Registrierung stimmen Sie unseren{' '}
+            <Link href="/agb" className="hover:text-muted-foreground underline">AGB</Link> und der{' '}
+            <Link href="/datenschutz" className="hover:text-muted-foreground underline">Datenschutzerklärung</Link> zu.
           </p>
+
+          <div className="flex justify-center gap-4 mt-3 text-xs text-muted-foreground/60">
+            <Link href="/impressum" className="hover:text-muted-foreground">Impressum</Link>
+            <Link href="/datenschutz" className="hover:text-muted-foreground">Datenschutz</Link>
+            <Link href="/agb" className="hover:text-muted-foreground">AGB</Link>
+          </div>
         </motion.div>
       </div>
     </div>
