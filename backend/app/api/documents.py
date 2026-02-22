@@ -29,7 +29,7 @@ ALLOWED_MIME_TYPES = {
     "text/plain",
     "text/csv",
 }
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 CATEGORIES = ["satzung", "protokoll", "formular", "finanzen", "sonstiges"]
 
@@ -79,7 +79,7 @@ async def upload_document(
     # Read file content
     content = await file.read()
     if len(content) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Datei zu groß. Maximum: 10 MB")
+        raise HTTPException(status_code=400, detail="Datei zu groß. Maximum: 50 MB")
 
     # Create upload directory
     user_upload_dir = os.path.join(UPLOAD_DIR, str(current_user.id))
