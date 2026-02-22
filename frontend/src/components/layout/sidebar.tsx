@@ -20,6 +20,7 @@ import {
   Calendar,
   CreditCard,
   Layers,
+  FileText,
 } from 'lucide-react'
 
 const navItems = [
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/transactions', icon: BookOpen, label: 'Kassenbuch' },
   { href: '/categories', icon: Tag, label: 'Kategorien' },
   { href: '/events', icon: Calendar, label: 'Veranstaltungen' },
+  { href: '/protocols', icon: FileText, label: 'Protokolle' },
   { href: '/sepa', icon: CreditCard, label: 'SEPA-Lastschrift' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },
   { href: '/settings', icon: Settings, label: 'Einstellungen' },

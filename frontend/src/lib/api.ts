@@ -126,6 +126,14 @@ export const gdprApi = {
   deleteAccount: () => api.delete('/gdpr/delete-account'),
 }
 
+export const protocolsApi = {
+  list: (params?: { protocol_type?: string; status?: string }) => api.get('/protocols', { params }),
+  create: (data: Record<string, unknown>) => api.post('/protocols', data),
+  get: (id: number) => api.get(`/protocols/${id}`),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/protocols/${id}`, data),
+  delete: (id: number) => api.delete(`/protocols/${id}`),
+}
+
 export const paymentRemindersApi = {
   list: (memberId: number, status?: string) =>
     api.get(`/members/${memberId}/reminders`, { params: status ? { status } : undefined }),
