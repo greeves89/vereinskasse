@@ -23,6 +23,7 @@ import {
   FileText,
   Cloud,
   Package,
+  Landmark,
 } from 'lucide-react'
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
   { href: '/vereinscloud', icon: Cloud, label: 'Vereinscloud' },
   { href: '/inventory', icon: Package, label: 'Inventar' },
   { href: '/sepa', icon: CreditCard, label: 'SEPA-Lastschrift' },
+  { href: '/bank', icon: Landmark, label: 'Bankabgleich' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },
   { href: '/settings', icon: Settings, label: 'Einstellungen' },
 ]

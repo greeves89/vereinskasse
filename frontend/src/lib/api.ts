@@ -186,3 +186,21 @@ export const portalApi = {
   getData: (token: string) => api.get(`/portal/${token}`),
   generateToken: (memberId: number) => api.post(`/portal/generate-token/${memberId}`),
 }
+
+export const bankApi = {
+  import: (file: File, addToKassenbuch: boolean = false) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post(`/bank/import?add_to_kassenbuch=${addToKassenbuch}`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  acceptTransaction: (data: {
+    booking_date: string;
+    amount: number;
+    description: string;
+    member_id?: number | null;
+    category_id?: number | null;
+    txn_type?: string;
+  }) => api.post('/bank/accept-transaction', data),
+}
