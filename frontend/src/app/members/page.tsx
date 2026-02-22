@@ -300,6 +300,75 @@ function MembersContent() {
           onDownloadTemplate={handleDownloadMemberTemplate}
         />
       )}
+
+      {/* Zuwendungsbestätigung Dialog */}
+      {receiptMember && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <FileCheck className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Zuwendungsbestätigung</h3>
+                <p className="text-xs text-muted-foreground">
+                  {receiptMember.first_name} {receiptMember.last_name}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              Erstellt eine Zuwendungsbestätigung nach amtlichem Muster (§ 10b EStG) für alle
+              Mitgliedsbeiträge und Spenden des Mitglieds im gewählten Kalenderjahr.
+            </p>
+
+            <div className="mb-4">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                Abrechnungsjahr
+              </label>
+              <select
+                value={receiptYear}
+                onChange={(e) => setReceiptYear(parseInt(e.target.value))}
+                className="w-full px-3 py-2.5 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 1 - i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {receiptError && (
+              <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive">{receiptError}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setReceiptMember(null); setReceiptError('') }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleDownloadReceipt}
+                disabled={receiptLoading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-60 transition-colors"
+              >
+                {receiptLoading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Wird erstellt...</>
+                ) : (
+                  <><FileCheck className="w-4 h-4" /> PDF herunterladen</>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
