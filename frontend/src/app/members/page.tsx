@@ -53,10 +53,24 @@ function MembersContent() {
 
   const handleCopyPortalLink = () => {
     if (!portalLink) return
-    navigator.clipboard.writeText(portalLink).then(() => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(portalLink).then(() => {
+        setPortalCopied(true)
+        setTimeout(() => setPortalCopied(false), 2000)
+      })
+    } else {
+      // Fallback for HTTP (non-secure context)
+      const el = document.createElement('textarea')
+      el.value = portalLink
+      el.style.position = 'fixed'
+      el.style.opacity = '0'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
       setPortalCopied(true)
       setTimeout(() => setPortalCopied(false), 2000)
-    })
+    }
   }
 
   const handleDownloadReceipt = async () => {
@@ -74,8 +88,19 @@ function MembersContent() {
       URL.revokeObjectURL(url)
       setReceiptMember(null)
     } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setReceiptError(msg || 'Fehler beim Erstellen der Bestätigung')
+      // When responseType is 'blob', error responses are also blobs - parse them as text
+      const errData = (e as { response?: { data?: Blob | { detail?: string } } })?.response?.data
+      let msg = 'Fehler beim Erstellen der Bestätigung'
+      if (errData instanceof Blob) {
+        try {
+          const text = await errData.text()
+          const json = JSON.parse(text)
+          msg = json.detail || msg
+        } catch { /* keep default msg */ }
+      } else if (errData && typeof errData === 'object' && 'detail' in errData) {
+        msg = (errData as { detail: string }).detail || msg
+      }
+      setReceiptError(msg)
     } finally {
       setReceiptLoading(false)
     }

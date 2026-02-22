@@ -115,75 +115,6 @@ async def get_stats(
     )
 
 
-@router.get("/{transaction_id}", response_model=TransactionRead)
-async def get_transaction(
-    transaction_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Transaction).where(
-            Transaction.id == transaction_id,
-            Transaction.user_id == current_user.id,
-        )
-    )
-    transaction = result.scalar_one_or_none()
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
-    return transaction
-
-
-@router.put("/{transaction_id}", response_model=TransactionRead)
-async def update_transaction(
-    transaction_id: int,
-    update_data: TransactionUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Transaction).where(
-            Transaction.id == transaction_id,
-            Transaction.user_id == current_user.id,
-        )
-    )
-    transaction = result.scalar_one_or_none()
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
-
-    update_dict = update_data.model_dump(exclude_unset=True)
-    for key, value in update_dict.items():
-        setattr(transaction, key, value)
-
-    await db.commit()
-    await db.refresh(transaction)
-    await audit(db, current_user.id, "update", "transaction", transaction.id, transaction.description)
-    await db.commit()
-    return transaction
-
-
-@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_transaction(
-    transaction_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Transaction).where(
-            Transaction.id == transaction_id,
-            Transaction.user_id == current_user.id,
-        )
-    )
-    transaction = result.scalar_one_or_none()
-    if not transaction:
-        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
-    tx_id = transaction.id
-    tx_desc = transaction.description
-    await db.delete(transaction)
-    await db.commit()
-    await audit(db, current_user.id, "delete", "transaction", tx_id, tx_desc)
-    await db.commit()
-
-
 @router.get("/export/datev")
 async def export_datev(
     year: int = Query(default=None),
@@ -457,3 +388,75 @@ async def get_monthly_chart(
         })
 
     return result
+
+
+# --- Single transaction routes MUST come after all static routes ---
+# (otherwise FastAPI matches e.g. "/monthly-chart" as transaction_id)
+
+@router.get("/{transaction_id}", response_model=TransactionRead)
+async def get_transaction(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Transaction).where(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+        )
+    )
+    transaction = result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    return transaction
+
+
+@router.put("/{transaction_id}", response_model=TransactionRead)
+async def update_transaction(
+    transaction_id: int,
+    update_data: TransactionUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Transaction).where(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+        )
+    )
+    transaction = result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(transaction, key, value)
+
+    await db.commit()
+    await db.refresh(transaction)
+    await audit(db, current_user.id, "update", "transaction", transaction.id, transaction.description)
+    await db.commit()
+    return transaction
+
+
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_transaction(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Transaction).where(
+            Transaction.id == transaction_id,
+            Transaction.user_id == current_user.id,
+        )
+    )
+    transaction = result.scalar_one_or_none()
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    tx_id = transaction.id
+    tx_desc = transaction.description
+    await db.delete(transaction)
+    await db.commit()
+    await audit(db, current_user.id, "delete", "transaction", tx_id, tx_desc)
+    await db.commit()
