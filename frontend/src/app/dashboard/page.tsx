@@ -6,6 +6,8 @@ import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { StatsCard } from '@/components/dashboard/stats-card'
+import { MonthlyChart } from '@/components/dashboard/monthly-chart'
+import { CategoryChart } from '@/components/dashboard/category-chart'
 import { useAuthStore } from '@/lib/auth'
 import { useTransactionStats } from '@/hooks/use-transactions'
 import { useMemberStats } from '@/hooks/use-members'
@@ -141,15 +143,45 @@ function DashboardContent() {
             </div>
           </motion.div>
 
-          {/* Quick stats summary */}
+          {/* Monthly Chart */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5"
           >
-            <h2 className="font-semibold text-foreground mb-4">Jahresübersicht</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-foreground">Einnahmen & Ausgaben (6 Monate)</h2>
+            </div>
+            <MonthlyChart />
+          </motion.div>
+
+          {/* Category Charts */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5">
+              <h2 className="font-semibold text-foreground mb-4">Einnahmen nach Kategorie</h2>
+              <CategoryChart type="income" />
+            </div>
+            <div className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5">
+              <h2 className="font-semibold text-foreground mb-4">Ausgaben nach Kategorie</h2>
+              <CategoryChart type="expense" />
+            </div>
+          </motion.div>
+
+          {/* Summary stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="rounded-xl border border-border bg-card/80 backdrop-blur-sm p-5"
+          >
+            <h2 className="font-semibold text-foreground mb-4">Gesamtübersicht</h2>
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Gesamteinnahmen</p>
                 <p className="text-xl font-bold text-success">
@@ -162,12 +194,12 @@ function DashboardContent() {
                   {statsLoading ? '...' : formatCurrency(stats?.total_expense || '0')}
                 </p>
               </div>
-            </div>
-            <div className="mt-3 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-1">Buchungen gesamt</p>
-              <p className="text-lg font-semibold text-foreground">
-                {statsLoading ? '...' : stats?.transaction_count || 0}
-              </p>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Buchungen gesamt</p>
+                <p className="text-xl font-bold text-foreground">
+                  {statsLoading ? '...' : stats?.transaction_count || 0}
+                </p>
+              </div>
             </div>
           </motion.div>
         </main>

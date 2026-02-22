@@ -89,6 +89,7 @@ export const transactionsApi = {
   exportDatev: (year?: number) => api.get('/transactions/export/datev', { params: { year }, responseType: 'blob' }),
   exportJahresabschluss: (year: number) =>
     api.get('/transactions/export/jahresabschluss', { params: { year }, responseType: 'blob' }),
+  monthlyChart: (months?: number) => api.get('/transactions/monthly-chart', { params: { months } }),
   downloadTemplate: () => api.get('/transactions/template/csv', { responseType: 'blob' }),
   importCsv: (file: File) => {
     const formData = new FormData()
