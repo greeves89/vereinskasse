@@ -6,6 +6,7 @@ from app.models.payment_reminder import PaymentReminder
 from app.models.feedback import Feedback
 from app.models.email_log import EmailLog
 from app.models.audit_log import AuditLog
+from app.models.event import Event, EventRegistration
 
 __all__ = [
     "User",
@@ -16,4 +17,6 @@ __all__ = [
     "Feedback",
     "EmailLog",
     "AuditLog",
+    "Event",
+    "EventRegistration",
 ]

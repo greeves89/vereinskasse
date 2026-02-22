@@ -14,10 +14,10 @@ import {
   Settings,
   Shield,
   ClipboardList,
-  ClipboardList,
   TrendingUp,
   Crown,
   Bell,
+  Calendar,
 } from 'lucide-react'
 
 const navItems = [
@@ -26,6 +26,7 @@ const navItems = [
   { href: '/beitraege', icon: Bell, label: 'Beiträge' },
   { href: '/transactions', icon: BookOpen, label: 'Kassenbuch' },
   { href: '/categories', icon: Tag, label: 'Kategorien' },
+  { href: '/events', icon: Calendar, label: 'Veranstaltungen' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },
   { href: '/settings', icon: Settings, label: 'Einstellungen' },
 ]
