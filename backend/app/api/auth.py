@@ -15,7 +15,9 @@ from app.core.security import (
 )
 from app.core.auth import get_current_user
 from app.config import settings
-from app.services.email_service import send_email, build_welcome_email, build_password_reset_email
+from app.services.email_service import (
+    send_email, build_welcome_email, build_password_reset_email, build_verification_email,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -36,24 +38,29 @@ async def register(user_data: UserCreate, response: Response, db: AsyncSession =
     user_count = count_result.scalar()
     role = "admin" if user_count == 0 else "member"
 
+    verification_token = secrets.token_urlsafe(32)
     user = User(
         email=user_data.email.lower(),
         name=user_data.name,
         password_hash=get_password_hash(user_data.password),
         role=role,
-        is_verified=True,
+        is_verified=False,
+        verification_token=verification_token,
+        verification_token_expires=datetime.now(timezone.utc) + timedelta(hours=48),
         organization_name=user_data.organization_name or user_data.name + "s Verein",
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
+    verify_url = f"{settings.FRONTEND_URL}/verify-email?token={verification_token}"
     try:
-        html, text = build_welcome_email(user.name, user.organization_name or "")
-        await send_email(db, user.email, "Willkommen bei VereinsKasse!", html, text)
+        html, text = build_verification_email(user.name, verify_url)
+        await send_email(db, user.email, "E-Mail verifizieren – VereinsKasse", html, text)
     except Exception:
         pass
 
+    # Auto-login after registration
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_token = create_refresh_token({"sub": str(user.id)})
 
@@ -73,6 +80,9 @@ async def login(login_data: LoginRequest, response: Response, db: AsyncSession =
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Konto deaktiviert")
+
+    if not user.is_verified:
+        raise HTTPException(status_code=403, detail="Bitte verifizieren Sie zuerst Ihre E-Mail-Adresse")
 
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
     refresh_token = create_refresh_token({"sub": str(user.id)})
@@ -131,13 +141,53 @@ async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
+@router.get("/verify-email")
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.verification_token == token))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Ungültiger Verifizierungslink")
+
+    if user.verification_token_expires and user.verification_token_expires < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Verifizierungslink abgelaufen – bitte neu anfordern")
+
+    user.is_verified = True
+    user.verification_token = None
+    user.verification_token_expires = None
+    await db.commit()
+
+    return {"message": "E-Mail erfolgreich verifiziert"}
+
+
+@router.post("/resend-verification")
+async def resend_verification(data: dict, db: AsyncSession = Depends(get_db)):
+    email = data.get("email", "").lower()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if user and not user.is_verified and user.is_active:
+        token = secrets.token_urlsafe(32)
+        user.verification_token = token
+        user.verification_token_expires = datetime.now(timezone.utc) + timedelta(hours=48)
+        await db.commit()
+
+        verify_url = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+        try:
+            html, text = build_verification_email(user.name, verify_url)
+            await send_email(db, user.email, "E-Mail verifizieren – VereinsKasse", html, text)
+        except Exception:
+            pass
+
+    return {"message": "Falls ein unverifiziertes Konto existiert, wurde die E-Mail erneut gesendet."}
+
+
 @router.post("/forgot-password")
 async def forgot_password(data: dict, db: AsyncSession = Depends(get_db)):
     email = data.get("email", "").lower()
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
-    # Always return success to prevent email enumeration
     if user and user.is_active:
         token = secrets.token_urlsafe(32)
         user.reset_token = token
@@ -174,6 +224,27 @@ async def reset_password(data: dict, db: AsyncSession = Depends(get_db)):
     user.password_hash = get_password_hash(new_password)
     user.reset_token = None
     user.reset_token_expires = None
+    await db.commit()
+
+    return {"message": "Passwort erfolgreich geändert"}
+
+
+@router.post("/change-password")
+async def change_password(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+
+    if not verify_password(current_password, current_user.password_hash):
+        raise HTTPException(status_code=400, detail="Aktuelles Passwort ist falsch")
+
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Neues Passwort muss mindestens 8 Zeichen lang sein")
+
+    current_user.password_hash = get_password_hash(new_password)
     await db.commit()
 
     return {"message": "Passwort erfolgreich geändert"}
