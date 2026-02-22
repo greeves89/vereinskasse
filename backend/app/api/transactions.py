@@ -18,6 +18,7 @@ from app.schemas.transaction import (
 from app.models.category import Category
 from app.core.auth import get_current_user, get_premium_user
 from app.services.pdf_service import generate_jahresabschluss_pdf
+from app.services.audit_service import audit
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -57,6 +58,8 @@ async def create_transaction(
     db.add(transaction)
     await db.commit()
     await db.refresh(transaction)
+    await audit(db, current_user.id, "create", "transaction", transaction.id, f"{transaction.description} ({transaction.amount}€)")
+    await db.commit()
     return transaction
 
 
@@ -153,6 +156,8 @@ async def update_transaction(
 
     await db.commit()
     await db.refresh(transaction)
+    await audit(db, current_user.id, "update", "transaction", transaction.id, transaction.description)
+    await db.commit()
     return transaction
 
 
@@ -171,7 +176,11 @@ async def delete_transaction(
     transaction = result.scalar_one_or_none()
     if not transaction:
         raise HTTPException(status_code=404, detail="Buchung nicht gefunden")
+    tx_id = transaction.id
+    tx_desc = transaction.description
     await db.delete(transaction)
+    await db.commit()
+    await audit(db, current_user.id, "delete", "transaction", tx_id, tx_desc)
     await db.commit()
 
 

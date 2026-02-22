@@ -12,6 +12,7 @@ from app.models.member import Member
 from app.schemas.member import MemberCreate, MemberRead, MemberUpdate
 from app.core.auth import get_current_user
 from app.config import settings
+from app.services.audit_service import audit
 
 router = APIRouter(prefix="/members", tags=["members"])
 
@@ -61,6 +62,8 @@ async def create_member(
     db.add(member)
     await db.commit()
     await db.refresh(member)
+    await audit(db, current_user.id, "create", "member", member.id, f"{member.first_name} {member.last_name}")
+    await db.commit()
     return member
 
 
@@ -94,11 +97,14 @@ async def update_member(
         raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
 
     update_dict = update_data.model_dump(exclude_unset=True)
+    changed_fields = list(update_dict.keys())
     for key, value in update_dict.items():
         setattr(member, key, value)
 
     await db.commit()
     await db.refresh(member)
+    await audit(db, current_user.id, "update", "member", member.id, f"{member.first_name} {member.last_name}: {', '.join(changed_fields)}")
+    await db.commit()
     return member
 
 
@@ -115,7 +121,11 @@ async def delete_member(
     if not member:
         raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
 
+    member_name = f"{member.first_name} {member.last_name}"
+    member_id_val = member.id
     await db.delete(member)
+    await db.commit()
+    await audit(db, current_user.id, "delete", "member", member_id_val, member_name)
     await db.commit()
 
 

@@ -162,3 +162,42 @@ async def update_feedback_status(
                 pass
 
     return feedback
+
+
+# ─────────────────────────────────────────────
+# Audit Log
+# ─────────────────────────────────────────────
+from pydantic import BaseModel as _BaseModel
+from app.models.audit_log import AuditLog
+
+
+class AuditLogResponse(_BaseModel):
+    id: int
+    user_id: Optional[int]
+    action: str
+    resource: str
+    resource_id: Optional[int]
+    detail: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("/audit-log", response_model=List[AuditLogResponse])
+async def list_audit_log(
+    resource: Optional[str] = Query(default=None),
+    action: Optional[str] = Query(default=None),
+    limit: int = Query(default=100, le=500),
+    offset: int = Query(default=0),
+    admin: User = Depends(get_admin_user),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(AuditLog).order_by(AuditLog.created_at.desc())
+    if resource:
+        query = query.where(AuditLog.resource == resource)
+    if action:
+        query = query.where(AuditLog.action == action)
+    query = query.limit(limit).offset(offset)
+    result = await db.execute(query)
+    return result.scalars().all()

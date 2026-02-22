@@ -13,6 +13,8 @@ import {
   MessageSquare,
   Settings,
   Shield,
+  ClipboardList,
+  ClipboardList,
   TrendingUp,
   Crown,
   Bell,
@@ -32,6 +34,7 @@ const adminItems = [
   { href: '/admin', icon: Shield, label: 'Admin Übersicht' },
   { href: '/admin/users', icon: Users, label: 'Benutzerverwaltung' },
   { href: '/admin/feedback', icon: MessageSquare, label: 'Feedback verwalten' },
+  { href: '/admin/audit-log', icon: ClipboardList, label: 'Audit-Log' },
 ]
 
 export function Sidebar() {
