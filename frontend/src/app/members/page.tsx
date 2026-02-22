@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import { MemberForm } from '@/components/members/member-form'
 import { PaymentRemindersPanel } from '@/components/members/payment-reminders-panel'
@@ -142,7 +143,8 @@ function MembersContent() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -515,6 +517,7 @@ function MembersContent() {
         </div>
       )}
     </div>
+    </MobileNavProvider>
   )
 }
 

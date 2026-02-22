@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import { adminApi } from '@/lib/api'
 import { AdminStats } from '@/lib/types'
@@ -21,7 +22,8 @@ function AdminDashboardContent() {
   }, [])
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header title="Admin Dashboard" subtitle="Systemübersicht und Verwaltung" />
@@ -115,6 +117,7 @@ function AdminDashboardContent() {
         </main>
       </div>
     </div>
+    </MobileNavProvider>
   )
 }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import api from '@/lib/api'
 import { Download, CreditCard, Users, AlertTriangle, CheckCircle, Loader2, Info } from 'lucide-react'
@@ -91,7 +92,8 @@ function SepaContent() {
   const missingMembers = preview?.members_with_iban.filter(m => !m.has_iban || !m.has_beitrag) || []
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -263,6 +265,7 @@ function SepaContent() {
         </main>
       </div>
     </div>
+    </MobileNavProvider>
   )
 }
 

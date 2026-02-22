@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import api from '@/lib/api'
 import {
@@ -182,7 +183,8 @@ function EventsContent() {
   const availableMembers = members.filter((m) => !registeredMemberIds.has(m.id))
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -372,6 +374,7 @@ function EventsContent() {
         </div>
       )}
     </div>
+    </MobileNavProvider>
   )
 }
 

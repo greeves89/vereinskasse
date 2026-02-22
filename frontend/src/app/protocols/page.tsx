@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import { protocolsApi } from '@/lib/api'
 import {
@@ -522,7 +523,8 @@ function ProtocolsContent() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -588,6 +590,7 @@ function ProtocolsContent() {
           )}
         </main>
       </div>
+    </div>
 
       {showModal && (
         <ProtocolModal
@@ -596,7 +599,7 @@ function ProtocolsContent() {
           onSave={handleSave}
         />
       )}
-    </div>
+    </MobileNavProvider>
   )
 }
 

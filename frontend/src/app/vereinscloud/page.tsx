@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
+import { MobileNavProvider } from '@/components/layout/mobile-nav-context'
 import { Header } from '@/components/layout/header'
 import { documentsApi } from '@/lib/api'
 import {
@@ -228,7 +229,8 @@ function VereinscloudContent() {
   const totalSize = docs.reduce((sum, d) => sum + d.file_size, 0)
 
   return (
-    <div className="flex h-screen bg-background">
+    <MobileNavProvider>
+      <div className="flex h-screen bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Header
@@ -384,6 +386,7 @@ function VereinscloudContent() {
           )}
         </main>
       </div>
+    </div>
 
       {showUpload && (
         <UploadModal
@@ -391,7 +394,7 @@ function VereinscloudContent() {
           onUploaded={() => { setShowUpload(false); loadDocs() }}
         />
       )}
-    </div>
+    </MobileNavProvider>
   )
 }
 

@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/lib/auth'
+import { useMobileNav } from './mobile-nav-context'
 import {
   LayoutDashboard,
   Users,
@@ -24,6 +25,7 @@ import {
   Cloud,
   Package,
   Landmark,
+  X,
 } from 'lucide-react'
 
 const navItems = [
@@ -50,20 +52,25 @@ const adminItems = [
   { href: '/admin/audit-log', icon: ClipboardList, label: 'Audit-Log' },
 ]
 
-export function Sidebar() {
+function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const { user } = useAuthStore()
 
   return (
-    <aside className="sidebar-width flex-shrink-0 h-screen flex flex-col bg-card border-r border-border">
+    <aside className="flex h-full flex-col bg-card border-r border-border">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href="/dashboard" className="flex items-center gap-3 flex-1">
           <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
             <TrendingUp className="w-4 h-4 text-primary" />
           </div>
           <span className="font-bold text-foreground text-lg">VereinsKasse</span>
         </Link>
+        {onClose && (
+          <button onClick={onClose} className="ml-2 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/50">
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* User info */}
@@ -168,5 +175,45 @@ export function Sidebar() {
         </div>
       )}
     </aside>
+  )
+}
+
+export function Sidebar() {
+  const { isOpen, close } = useMobileNav()
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden md:flex sidebar-width flex-shrink-0 h-screen">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/60 md:hidden"
+              onClick={close}
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 z-50 w-72 md:hidden"
+            >
+              <SidebarContent onClose={close} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
