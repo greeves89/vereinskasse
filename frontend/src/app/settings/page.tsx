@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import {
   User, Lock, Shield, Download, Trash2, Crown, Check, AlertTriangle, Loader2, X,
 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 function SettingsContent() {
   const router = useRouter()
@@ -93,7 +94,7 @@ function SettingsContent() {
     try {
       await api.post('/stripe/cancel-subscription')
       await fetchUser()
-      alert('Ihr Abonnement wird am Ende der Laufzeit gekündigt.')
+      toast('Ihr Abonnement wird am Ende der Laufzeit gekündigt.', 'success')
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } }
       setError(error.response?.data?.detail || 'Fehler beim Kündigen')
@@ -112,7 +113,7 @@ function SettingsContent() {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Fehler beim Exportieren der Daten')
+      toast('Fehler beim Exportieren der Daten', 'error')
     }
   }
 
@@ -130,7 +131,7 @@ function SettingsContent() {
       router.push('/login')
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } }
-      alert(error.response?.data?.detail || 'Fehler beim Löschen des Kontos')
+      toast(error.response?.data?.detail || 'Fehler beim Löschen des Kontos', 'error')
     }
   }
 

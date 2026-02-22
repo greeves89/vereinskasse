@@ -16,6 +16,7 @@ import {
   BookOpen, Plus, ArrowUpRight, ArrowDownRight, Edit2, Trash2,
   Download, Filter, TrendingUp, TrendingDown, DollarSign, Upload,
 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 function TransactionsContent() {
   const { user } = useAuthStore()
@@ -71,7 +72,7 @@ function TransactionsContent() {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Export fehlgeschlagen. Premium-Abo erforderlich.')
+      toast('Export fehlgeschlagen. Premium-Abo erforderlich.', 'error')
     }
   }
 
@@ -86,7 +87,7 @@ function TransactionsContent() {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert('Export fehlgeschlagen. Premium-Abo erforderlich.')
+      toast('Export fehlgeschlagen. Premium-Abo erforderlich.', 'error')
     }
   }
 

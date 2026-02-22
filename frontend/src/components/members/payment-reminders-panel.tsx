@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import {
   X, Bell, Plus, Send, Trash2, CheckCircle, Clock, AlertCircle,
 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 interface PaymentRemindersPanelProps {
   member: Member
@@ -104,7 +105,7 @@ export function PaymentRemindersPanel({ member, onClose }: PaymentRemindersPanel
       fetchReminders()
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } }
-      alert(error.response?.data?.detail || 'E-Mail konnte nicht gesendet werden')
+      toast(error.response?.data?.detail || 'E-Mail konnte nicht gesendet werden', 'error')
     } finally {
       setSendingId(null)
     }

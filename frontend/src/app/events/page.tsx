@@ -9,6 +9,7 @@ import api from '@/lib/api'
 import {
   Calendar, Plus, Edit2, Trash2, X, Users, MapPin, Clock, UserPlus, UserMinus,
 } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
 interface Member {
   id: number
@@ -161,7 +162,7 @@ function EventsContent() {
       if (updated) setDetailEvent(updated)
       setAddingMemberId('')
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Fehler bei der Anmeldung')
+      toast(err?.response?.data?.detail || 'Fehler bei der Anmeldung', 'error')
     }
   }
 
