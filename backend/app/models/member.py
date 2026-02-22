@@ -22,11 +22,13 @@ class Member(Base):
     beitrag_monthly: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 2), nullable=True)
     iban: Mapped[Optional[str]] = mapped_column(String(34), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    group_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("member_groups.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="members")
+    group: Mapped[Optional["MemberGroup"]] = relationship("MemberGroup", back_populates="members")
     transactions: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="member")
     payment_reminders: Mapped[List["PaymentReminder"]] = relationship("PaymentReminder", back_populates="member", cascade="all, delete-orphan")
 

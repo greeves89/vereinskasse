@@ -34,6 +34,7 @@ class User(Base):
     categories: Mapped[List["Category"]] = relationship("Category", back_populates="user", cascade="all, delete-orphan")
     feedback: Mapped[List["Feedback"]] = relationship("Feedback", back_populates="user", cascade="all, delete-orphan")
     events: Mapped[List["Event"]] = relationship("Event", back_populates="user", cascade="all, delete-orphan")
+    member_groups: Mapped[List["MemberGroup"]] = relationship("MemberGroup", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def is_admin(self) -> bool:

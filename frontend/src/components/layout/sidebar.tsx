@@ -19,11 +19,13 @@ import {
   Bell,
   Calendar,
   CreditCard,
+  Layers,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/members', icon: Users, label: 'Mitglieder' },
+  { href: '/groups', icon: Layers, label: 'Gruppen' },
   { href: '/beitraege', icon: Bell, label: 'Beiträge' },
   { href: '/transactions', icon: BookOpen, label: 'Kassenbuch' },
   { href: '/categories', icon: Tag, label: 'Kategorien' },

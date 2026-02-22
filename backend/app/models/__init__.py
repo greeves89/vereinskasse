@@ -7,6 +7,7 @@ from app.models.feedback import Feedback
 from app.models.email_log import EmailLog
 from app.models.audit_log import AuditLog
 from app.models.event import Event, EventRegistration
+from app.models.member_group import MemberGroup
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "AuditLog",
     "Event",
     "EventRegistration",
+    "MemberGroup",
 ]
