@@ -41,5 +41,8 @@ Thumbs.db
 *.log
 logs/
 
+# Backup files
+*.bak
+
 # Uploads
 uploads/
