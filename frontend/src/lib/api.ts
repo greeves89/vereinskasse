@@ -150,6 +150,15 @@ export const documentsApi = {
   delete: (id: number) => api.delete(`/documents/${id}`),
 }
 
+export const donationsApi = {
+  getSummary: (memberId: number, year: number) =>
+    api.get(`/donations/summary/${memberId}`, { params: { year } }),
+  getReceiptUrl: (memberId: number, year: number) =>
+    `${api.defaults.baseURL}/donations/receipt/${memberId}?year=${year}`,
+  downloadReceipt: (memberId: number, year: number) =>
+    api.get(`/donations/receipt/${memberId}`, { params: { year }, responseType: 'blob' }),
+}
+
 export const paymentRemindersApi = {
   list: (memberId: number, status?: string) =>
     api.get(`/members/${memberId}/reminders`, { params: status ? { status } : undefined }),

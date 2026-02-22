@@ -8,21 +8,47 @@ import { Header } from '@/components/layout/header'
 import { MemberForm } from '@/components/members/member-form'
 import { PaymentRemindersPanel } from '@/components/members/payment-reminders-panel'
 import { useMembers, useMemberStats } from '@/hooks/use-members'
-import { membersApi } from '@/lib/api'
+import { membersApi, donationsApi } from '@/lib/api'
 import { Member } from '@/lib/types'
 import { formatCurrency, formatDate, getStatusLabel, getStatusColor } from '@/lib/utils'
 import { CsvImportDialog } from '@/components/csv-import-dialog'
-import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown, Bell, Upload } from 'lucide-react'
+import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown, Bell, Upload, FileCheck, Loader2 } from 'lucide-react'
 
 function MembersContent() {
   const [showForm, setShowForm] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [editMember, setEditMember] = useState<Member | null>(null)
   const [reminderMember, setReminderMember] = useState<Member | null>(null)
+  const [receiptMember, setReceiptMember] = useState<Member | null>(null)
+  const [receiptYear, setReceiptYear] = useState(new Date().getFullYear() - 1)
+  const [receiptLoading, setReceiptLoading] = useState(false)
+  const [receiptError, setReceiptError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const { members, isLoading, refetch } = useMembers({ search: search || undefined, status: statusFilter || undefined })
   const { stats } = useMemberStats()
+
+  const handleDownloadReceipt = async () => {
+    if (!receiptMember) return
+    setReceiptLoading(true)
+    setReceiptError('')
+    try {
+      const res = await donationsApi.downloadReceipt(receiptMember.id, receiptYear)
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `zuwendungsbestaetigung_${receiptMember.last_name}_${receiptYear}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+      setReceiptMember(null)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setReceiptError(msg || 'Fehler beim Erstellen der Bestätigung')
+    } finally {
+      setReceiptLoading(false)
+    }
+  }
 
   const handleCreate = async (data: Record<string, unknown>) => {
     await membersApi.create(data)
@@ -214,6 +240,13 @@ function MembersContent() {
                       </div>
                     )}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => { setReceiptMember(member); setReceiptError('') }}
+                        title="Zuwendungsbestätigung"
+                        className="p-1.5 rounded-lg hover:bg-emerald-500/10 text-muted-foreground hover:text-emerald-500 transition-colors"
+                      >
+                        <FileCheck className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => setReminderMember(member)}
                         title="Beitragsverfolgung"

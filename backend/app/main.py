@@ -4,7 +4,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.api import auth, users, members, transactions, categories, feedback, admin, gdpr
-from app.api import stripe_api, payment_reminders, events, sepa, member_groups, protocols, documents
+from app.api import stripe_api, payment_reminders, events, sepa, member_groups, protocols, documents, donations
 
 
 @asynccontextmanager
@@ -47,6 +47,7 @@ app.include_router(sepa.router, prefix="/api/v1")
 app.include_router(member_groups.router, prefix="/api/v1")
 app.include_router(protocols.router, prefix="/api/v1")
 app.include_router(documents.router, prefix="/api/v1")
+app.include_router(donations.router, prefix="/api/v1")
 
 
 @app.get("/api/health")
