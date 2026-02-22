@@ -22,6 +22,7 @@ import {
   Layers,
   FileText,
   Cloud,
+  Package,
 } from 'lucide-react'
 
 const navItems = [
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/events', icon: Calendar, label: 'Veranstaltungen' },
   { href: '/protocols', icon: FileText, label: 'Protokolle' },
   { href: '/vereinscloud', icon: Cloud, label: 'Vereinscloud' },
+  { href: '/inventory', icon: Package, label: 'Inventar' },
   { href: '/sepa', icon: CreditCard, label: 'SEPA-Lastschrift' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },
   { href: '/settings', icon: Settings, label: 'Einstellungen' },

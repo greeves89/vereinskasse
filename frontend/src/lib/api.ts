@@ -172,3 +172,12 @@ export const paymentRemindersApi = {
     api.post(`/members/${memberId}/reminders/${reminderId}/send`),
   paymentOverview: () => api.get('/members/payment-overview'),
 }
+
+export const inventoryApi = {
+  list: (status?: string) => api.get('/inventory', { params: status ? { status } : undefined }),
+  create: (data: Record<string, unknown>) => api.post('/inventory', data),
+  update: (id: number, data: Record<string, unknown>) => api.put(`/inventory/${id}`, data),
+  delete: (id: number) => api.delete(`/inventory/${id}`),
+  lend: (id: number, data: { lent_to: string; lent_since: string }) => api.post(`/inventory/${id}/lend`, data),
+  returnItem: (id: number) => api.post(`/inventory/${id}/return`),
+}
