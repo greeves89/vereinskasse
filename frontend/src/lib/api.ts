@@ -71,6 +71,12 @@ export const membersApi = {
   update: (id: number, data: Record<string, unknown>) => api.put(`/members/${id}`, data),
   delete: (id: number) => api.delete(`/members/${id}`),
   stats: () => api.get('/members/count/stats'),
+  downloadTemplate: () => api.get('/members/template/csv', { responseType: 'blob' }),
+  importCsv: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/members/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }
 
 export const transactionsApi = {
@@ -83,6 +89,12 @@ export const transactionsApi = {
   exportDatev: (year?: number) => api.get('/transactions/export/datev', { params: { year }, responseType: 'blob' }),
   exportJahresabschluss: (year: number) =>
     api.get('/transactions/export/jahresabschluss', { params: { year }, responseType: 'blob' }),
+  downloadTemplate: () => api.get('/transactions/template/csv', { responseType: 'blob' }),
+  importCsv: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/transactions/import', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }
 
 export const categoriesApi = {

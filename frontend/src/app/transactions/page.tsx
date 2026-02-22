@@ -11,14 +11,16 @@ import { transactionsApi } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
 import { Transaction } from '@/lib/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { CsvImportDialog } from '@/components/csv-import-dialog'
 import {
   BookOpen, Plus, ArrowUpRight, ArrowDownRight, Edit2, Trash2,
-  Download, Filter, TrendingUp, TrendingDown, DollarSign,
+  Download, Filter, TrendingUp, TrendingDown, DollarSign, Upload,
 } from 'lucide-react'
 
 function TransactionsContent() {
   const { user } = useAuthStore()
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null)
   const [typeFilter, setTypeFilter] = useState('')
   const { transactions, isLoading, refetch } = useTransactions({ type: typeFilter || undefined })
@@ -41,6 +43,22 @@ function TransactionsContent() {
       await transactionsApi.delete(t.id)
       refetch()
     }
+  }
+
+  const handleImportTransactions = async (file: File) => {
+    const res = await transactionsApi.importCsv(file)
+    refetch()
+    return res.data
+  }
+
+  const handleDownloadTransactionTemplate = async () => {
+    const res = await transactionsApi.downloadTemplate()
+    const url = URL.createObjectURL(new Blob([res.data]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'buchungen_vorlage.csv'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const handleExportDatev = async () => {
@@ -99,6 +117,13 @@ function TransactionsContent() {
                   </button>
                 </>
               )}
+              <button
+                onClick={() => setShowImport(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-secondary text-sm transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </button>
               <button
                 onClick={() => { setEditTransaction(null); setShowForm(true) }}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -263,6 +288,17 @@ function TransactionsContent() {
           transaction={editTransaction}
           onSubmit={editTransaction ? handleUpdate : handleCreate}
           onClose={() => { setShowForm(false); setEditTransaction(null) }}
+        />
+      )}
+
+      {showImport && (
+        <CsvImportDialog
+          title="Buchungen importieren"
+          description="Importieren Sie Buchungen aus einer CSV-Datei. Laden Sie zuerst die Vorlage herunter, um das korrekte Format zu sehen."
+          templateFilename="buchungen_vorlage.csv"
+          onClose={() => { setShowImport(false); refetch() }}
+          onImport={handleImportTransactions}
+          onDownloadTemplate={handleDownloadTransactionTemplate}
         />
       )}
     </div>

@@ -11,10 +11,12 @@ import { useMembers, useMemberStats } from '@/hooks/use-members'
 import { membersApi } from '@/lib/api'
 import { Member } from '@/lib/types'
 import { formatCurrency, formatDate, getStatusLabel, getStatusColor } from '@/lib/utils'
-import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown, Bell } from 'lucide-react'
+import { CsvImportDialog } from '@/components/csv-import-dialog'
+import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown, Bell, Upload } from 'lucide-react'
 
 function MembersContent() {
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [editMember, setEditMember] = useState<Member | null>(null)
   const [reminderMember, setReminderMember] = useState<Member | null>(null)
   const [search, setSearch] = useState('')
@@ -25,6 +27,22 @@ function MembersContent() {
   const handleCreate = async (data: Record<string, unknown>) => {
     await membersApi.create(data)
     refetch()
+  }
+
+  const handleImportMembers = async (file: File) => {
+    const res = await membersApi.importCsv(file)
+    refetch()
+    return res.data
+  }
+
+  const handleDownloadMemberTemplate = async () => {
+    const res = await membersApi.downloadTemplate()
+    const url = URL.createObjectURL(new Blob([res.data]))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'mitglieder_vorlage.csv'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const handleUpdate = async (data: Record<string, unknown>) => {
@@ -49,13 +67,22 @@ function MembersContent() {
           title="Mitgliederverwaltung"
           subtitle={stats ? `${stats.active} aktive Mitglieder${stats.limit ? ` / ${stats.limit} max.` : ''}` : ''}
           actions={
-            <button
-              onClick={() => { setEditMember(null); setShowForm(true) }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Mitglied hinzufügen
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowImport(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                CSV-Import
+              </button>
+              <button
+                onClick={() => { setEditMember(null); setShowForm(true) }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Mitglied hinzufügen
+              </button>
+            </div>
           }
         />
 
@@ -227,6 +254,17 @@ function MembersContent() {
         <PaymentRemindersPanel
           member={reminderMember}
           onClose={() => setReminderMember(null)}
+        />
+      )}
+
+      {showImport && (
+        <CsvImportDialog
+          title="Mitglieder importieren"
+          description="Importieren Sie Mitglieder aus einer CSV-Datei. Laden Sie zuerst die Vorlage herunter, um das korrekte Format zu sehen."
+          templateFilename="mitglieder_vorlage.csv"
+          onClose={() => { setShowImport(false); refetch() }}
+          onImport={handleImportMembers}
+          onDownloadTemplate={handleDownloadMemberTemplate}
         />
       )}
     </div>
