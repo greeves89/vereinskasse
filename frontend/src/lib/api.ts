@@ -112,3 +112,17 @@ export const gdprApi = {
   exportData: () => api.get('/gdpr/export', { responseType: 'blob' }),
   deleteAccount: () => api.delete('/gdpr/delete-account'),
 }
+
+export const paymentRemindersApi = {
+  list: (memberId: number, status?: string) =>
+    api.get(`/members/${memberId}/reminders`, { params: status ? { status } : undefined }),
+  create: (memberId: number, data: { amount: string; due_date: string; notes?: string }) =>
+    api.post(`/members/${memberId}/reminders`, data),
+  update: (memberId: number, reminderId: number, data: Record<string, unknown>) =>
+    api.put(`/members/${memberId}/reminders/${reminderId}`, data),
+  delete: (memberId: number, reminderId: number) =>
+    api.delete(`/members/${memberId}/reminders/${reminderId}`),
+  send: (memberId: number, reminderId: number) =>
+    api.post(`/members/${memberId}/reminders/${reminderId}/send`),
+  paymentOverview: () => api.get('/members/payment-overview'),
+}

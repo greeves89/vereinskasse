@@ -81,6 +81,27 @@ export interface MemberStats {
   is_premium: boolean
 }
 
+export interface PaymentReminder {
+  id: number
+  member_id: number
+  amount: string
+  due_date: string
+  sent_at: string | null
+  status: 'pending' | 'sent' | 'paid' | 'overdue'
+  notes: string | null
+  created_at: string
+}
+
+export interface MemberPaymentOverview {
+  member_id: number
+  member_name: string
+  email: string | null
+  beitrag_monthly: number | null
+  open_reminders: number
+  overdue_count: number
+  total_due: number
+}
+
 export interface AdminStats {
   total_users: number
   premium_users: number

@@ -15,11 +15,13 @@ import {
   Shield,
   TrendingUp,
   Crown,
+  Bell,
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/members', icon: Users, label: 'Mitglieder' },
+  { href: '/beitraege', icon: Bell, label: 'Beiträge' },
   { href: '/transactions', icon: BookOpen, label: 'Kassenbuch' },
   { href: '/categories', icon: Tag, label: 'Kategorien' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },

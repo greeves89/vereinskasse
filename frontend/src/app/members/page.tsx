@@ -6,15 +6,17 @@ import { AuthGuard } from '@/components/auth/auth-guard'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { MemberForm } from '@/components/members/member-form'
+import { PaymentRemindersPanel } from '@/components/members/payment-reminders-panel'
 import { useMembers, useMemberStats } from '@/hooks/use-members'
 import { membersApi } from '@/lib/api'
 import { Member } from '@/lib/types'
 import { formatCurrency, formatDate, getStatusLabel, getStatusColor } from '@/lib/utils'
-import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown } from 'lucide-react'
+import { Users, Plus, Search, Mail, Phone, Edit2, Trash2, Crown, Bell } from 'lucide-react'
 
 function MembersContent() {
   const [showForm, setShowForm] = useState(false)
   const [editMember, setEditMember] = useState<Member | null>(null)
+  const [reminderMember, setReminderMember] = useState<Member | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const { members, isLoading, refetch } = useMembers({ search: search || undefined, status: statusFilter || undefined })
@@ -186,6 +188,13 @@ function MembersContent() {
                     )}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
+                        onClick={() => setReminderMember(member)}
+                        title="Beitragsverfolgung"
+                        className="p-1.5 rounded-lg hover:bg-amber-500/10 text-muted-foreground hover:text-amber-500 transition-colors"
+                      >
+                        <Bell className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => { setEditMember(member); setShowForm(true) }}
                         className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                       >
@@ -211,6 +220,13 @@ function MembersContent() {
           member={editMember}
           onSubmit={editMember ? handleUpdate : handleCreate}
           onClose={() => { setShowForm(false); setEditMember(null) }}
+        />
+      )}
+
+      {reminderMember && (
+        <PaymentRemindersPanel
+          member={reminderMember}
+          onClose={() => setReminderMember(null)}
         />
       )}
     </div>
