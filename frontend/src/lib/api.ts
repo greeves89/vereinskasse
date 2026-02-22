@@ -181,3 +181,8 @@ export const inventoryApi = {
   lend: (id: number, data: { lent_to: string; lent_since: string }) => api.post(`/inventory/${id}/lend`, data),
   returnItem: (id: number) => api.post(`/inventory/${id}/return`),
 }
+
+export const portalApi = {
+  getData: (token: string) => api.get(`/portal/${token}`),
+  generateToken: (memberId: number) => api.post(`/portal/generate-token/${memberId}`),
+}

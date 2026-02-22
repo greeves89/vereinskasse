@@ -23,6 +23,7 @@ class Member(Base):
     iban: Mapped[Optional[str]] = mapped_column(String(34), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     group_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("member_groups.id", ondelete="SET NULL"), nullable=True)
+    portal_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
