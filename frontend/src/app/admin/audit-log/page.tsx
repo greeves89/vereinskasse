@@ -66,7 +66,7 @@ export default function AuditLogPage() {
   useEffect(() => { load(); }, [resourceFilter, actionFilter]);
 
   return (
-    <AuthGuard adminOnly>
+    <AuthGuard requireAdmin>
       <div className="flex h-screen bg-background">
         <Sidebar />
         <div className="flex-1 ml-[260px] flex flex-col overflow-hidden">
