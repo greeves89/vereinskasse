@@ -9,6 +9,7 @@ from app.models.audit_log import AuditLog
 from app.models.event import Event, EventRegistration
 from app.models.member_group import MemberGroup
 from app.models.protocol import Protocol
+from app.models.document import VereinsDocument
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "EventRegistration",
     "MemberGroup",
     "Protocol",
+    "VereinsDocument",
 ]

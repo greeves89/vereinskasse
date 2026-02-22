@@ -36,6 +36,7 @@ class User(Base):
     events: Mapped[List["Event"]] = relationship("Event", back_populates="user", cascade="all, delete-orphan")
     member_groups: Mapped[List["MemberGroup"]] = relationship("MemberGroup", back_populates="user", cascade="all, delete-orphan")
     protocols: Mapped[List["Protocol"]] = relationship("Protocol", back_populates="user", cascade="all, delete-orphan")
+    verein_documents: Mapped[List["VereinsDocument"]] = relationship("VereinsDocument", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def is_admin(self) -> bool:

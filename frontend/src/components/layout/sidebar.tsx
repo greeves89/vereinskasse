@@ -21,6 +21,7 @@ import {
   CreditCard,
   Layers,
   FileText,
+  Cloud,
 } from 'lucide-react'
 
 const navItems = [
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/categories', icon: Tag, label: 'Kategorien' },
   { href: '/events', icon: Calendar, label: 'Veranstaltungen' },
   { href: '/protocols', icon: FileText, label: 'Protokolle' },
+  { href: '/vereinscloud', icon: Cloud, label: 'Vereinscloud' },
   { href: '/sepa', icon: CreditCard, label: 'SEPA-Lastschrift' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback' },
   { href: '/settings', icon: Settings, label: 'Einstellungen' },

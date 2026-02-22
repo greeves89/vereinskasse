@@ -134,6 +134,22 @@ export const protocolsApi = {
   delete: (id: number) => api.delete(`/protocols/${id}`),
 }
 
+export const documentsApi = {
+  list: (category?: string) => api.get('/documents', { params: category ? { category } : undefined }),
+  upload: (file: File, title?: string, description?: string, category?: string) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    if (title) formData.append('title', title)
+    if (description) formData.append('description', description)
+    if (category) formData.append('category', category)
+    return api.post('/documents', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
+  getDownloadUrl: (id: number) => `${api.defaults.baseURL}/documents/${id}/download`,
+  update: (id: number, data: { title?: string; description?: string; category?: string }) =>
+    api.patch(`/documents/${id}`, null, { params: data }),
+  delete: (id: number) => api.delete(`/documents/${id}`),
+}
+
 export const paymentRemindersApi = {
   list: (memberId: number, status?: string) =>
     api.get(`/members/${memberId}/reminders`, { params: status ? { status } : undefined }),
