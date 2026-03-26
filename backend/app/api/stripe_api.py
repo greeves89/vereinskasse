@@ -1,9 +1,12 @@
 import stripe
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from app.database import get_db
 from app.models.user import User
@@ -85,7 +88,8 @@ async def stripe_webhook(
                         else:
                             from datetime import timedelta
                             user.subscription_expires_at = datetime.now(timezone.utc) + timedelta(days=365)
-                    except Exception:
+                    except Exception as e:
+                        logger.error(f"Stripe error: {e}")
                         from datetime import timedelta
                         user.subscription_expires_at = datetime.now(timezone.utc) + timedelta(days=365)
                 await db.commit()

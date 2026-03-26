@@ -1,8 +1,11 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from app.database import get_db
 from app.models.user import User
@@ -158,8 +161,8 @@ async def update_feedback_status(
                     f"Antwort auf Ihr Feedback: {feedback.title}",
                     html, text,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to send email: {e}")
 
     return feedback
 
