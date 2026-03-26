@@ -27,7 +27,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 COOKIE_SETTINGS = {
     "httponly": True,
     "samesite": "lax",
-    "secure": settings.ENVIRONMENT == "production" and settings.HTTPS_ENABLED,
+    "secure": settings.ENVIRONMENT == "production",
 }
 
 
@@ -102,7 +102,6 @@ async def login(login_data: LoginRequest, response: Response, db: AsyncSession =
             "organization_name": user.organization_name,
             "subscription_tier": user.subscription_tier,
         },
-        "vk_access_token": access_token,
     }
 
 
