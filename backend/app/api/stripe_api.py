@@ -125,12 +125,13 @@ async def stripe_webhook(
     elif event["type"] == "invoice.payment_failed":
         invoice = event["data"]["object"]
         customer_id = invoice.get("customer")
+        attempt_count = invoice.get("attempt_count", 0)
 
-        result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
-        user = result.scalar_one_or_none()
-        if user:
-            user.subscription_tier = "free"
-            await db.commit()
+        logger.warning(
+            f"Payment failed for customer {customer_id}, "
+            f"attempt {attempt_count}. "
+            f"Waiting for Stripe retry cycle — downgrade happens only on subscription.deleted."
+        )
 
     return {"status": "ok"}
 
