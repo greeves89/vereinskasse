@@ -44,3 +44,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if settings.SECRET_KEY == "changeme-generate-with-openssl-rand-hex-32":
+    import logging
+    logging.getLogger(__name__).warning(
+        "SECRET_KEY is using the insecure default value! "
+        "Set SECRET_KEY in your .env file for production."
+    )
