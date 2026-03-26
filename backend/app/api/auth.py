@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from typing import Optional
 from datetime import timedelta, datetime, timezone
 import secrets
+import logging
 
 from app.database import get_db
 from app.models.user import User
@@ -18,6 +19,8 @@ from app.config import settings
 from app.services.email_service import (
     send_email, build_welcome_email, build_password_reset_email, build_verification_email,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -57,8 +60,8 @@ async def register(user_data: UserCreate, response: Response, db: AsyncSession =
     try:
         html, text = build_verification_email(user.name, verify_url)
         await send_email(db, user.email, "E-Mail verifizieren – VereinsKasse", html, text)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Email send failed: %s", e)
 
     # Auto-login after registration
     access_token = create_access_token({"sub": str(user.id), "role": user.role})
@@ -176,8 +179,8 @@ async def resend_verification(data: dict, db: AsyncSession = Depends(get_db)):
         try:
             html, text = build_verification_email(user.name, verify_url)
             await send_email(db, user.email, "E-Mail verifizieren – VereinsKasse", html, text)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Email send failed: %s", e)
 
     return {"message": "Falls ein unverifiziertes Konto existiert, wurde die E-Mail erneut gesendet."}
 
@@ -198,8 +201,8 @@ async def forgot_password(data: dict, db: AsyncSession = Depends(get_db)):
         try:
             html, text = build_password_reset_email(user.name, reset_url)
             await send_email(db, user.email, "Passwort zurücksetzen – VereinsKasse", html, text)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Email send failed: %s", e)
 
     return {"message": "Falls ein Konto mit dieser E-Mail existiert, wurde eine E-Mail gesendet."}
 
