@@ -1,5 +1,9 @@
+import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.audit_log import AuditLog
+
+logger = logging.getLogger(__name__)
 
 
 async def audit(
@@ -21,5 +25,5 @@ async def audit(
         )
         db.add(entry)
         # Note: caller must commit
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error("Audit log failed: %s", e, exc_info=True)
