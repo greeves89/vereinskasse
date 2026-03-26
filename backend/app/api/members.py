@@ -67,68 +67,6 @@ async def create_member(
     return member
 
 
-@router.get("/{member_id}", response_model=MemberRead)
-async def get_member(
-    member_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
-    )
-    member = result.scalar_one_or_none()
-    if not member:
-        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
-    return member
-
-
-@router.put("/{member_id}", response_model=MemberRead)
-async def update_member(
-    member_id: int,
-    update_data: MemberUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
-    )
-    member = result.scalar_one_or_none()
-    if not member:
-        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
-
-    update_dict = update_data.model_dump(exclude_unset=True)
-    changed_fields = list(update_dict.keys())
-    for key, value in update_dict.items():
-        setattr(member, key, value)
-
-    await db.commit()
-    await db.refresh(member)
-    await audit(db, current_user.id, "update", "member", member.id, f"{member.first_name} {member.last_name}: {', '.join(changed_fields)}")
-    await db.commit()
-    return member
-
-
-@router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_member(
-    member_id: int,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
-    )
-    member = result.scalar_one_or_none()
-    if not member:
-        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
-
-    member_name = f"{member.first_name} {member.last_name}"
-    member_id_val = member.id
-    await db.delete(member)
-    await db.commit()
-    await audit(db, current_user.id, "delete", "member", member_id_val, member_name)
-    await db.commit()
-
-
 @router.get("/template/csv")
 async def download_member_template(
     current_user: User = Depends(get_current_user),
@@ -286,3 +224,65 @@ async def get_member_stats(
         "limit": settings.FREE_MEMBER_LIMIT if not current_user.is_premium else None,
         "is_premium": current_user.is_premium,
     }
+
+
+@router.get("/{member_id}", response_model=MemberRead)
+async def get_member(
+    member_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
+    )
+    member = result.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
+    return member
+
+
+@router.put("/{member_id}", response_model=MemberRead)
+async def update_member(
+    member_id: int,
+    update_data: MemberUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
+    )
+    member = result.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+    changed_fields = list(update_dict.keys())
+    for key, value in update_dict.items():
+        setattr(member, key, value)
+
+    await db.commit()
+    await db.refresh(member)
+    await audit(db, current_user.id, "update", "member", member.id, f"{member.first_name} {member.last_name}: {', '.join(changed_fields)}")
+    await db.commit()
+    return member
+
+
+@router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_member(
+    member_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Member).where(Member.id == member_id, Member.user_id == current_user.id)
+    )
+    member = result.scalar_one_or_none()
+    if not member:
+        raise HTTPException(status_code=404, detail="Mitglied nicht gefunden")
+
+    member_name = f"{member.first_name} {member.last_name}"
+    member_id_val = member.id
+    await db.delete(member)
+    await db.commit()
+    await audit(db, current_user.id, "delete", "member", member_id_val, member_name)
+    await db.commit()
