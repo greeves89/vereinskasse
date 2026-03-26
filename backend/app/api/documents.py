@@ -1,3 +1,4 @@
+import asyncio
 import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -90,9 +91,12 @@ async def upload_document(
     unique_filename = f"{uuid.uuid4()}{ext}"
     file_path = os.path.join(user_upload_dir, unique_filename)
 
-    # Write file
-    with open(file_path, "wb") as f:
-        f.write(content)
+    # Write file (in thread pool to avoid blocking the event loop)
+    def _write() -> None:
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+    await asyncio.to_thread(_write)
 
     # Create DB record
     doc = VereinsDocument(
