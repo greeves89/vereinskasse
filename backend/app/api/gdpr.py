@@ -1,5 +1,6 @@
 import json
 from fastapi import APIRouter, Depends, Response, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -97,4 +98,7 @@ async def delete_my_account(
 
     await db.delete(current_user)
     await db.commit()
-    return {"message": "Ihr Konto und alle zugehörigen Daten wurden gemäß DSGVO Art. 17 gelöscht."}
+    response = JSONResponse({"message": "Ihr Konto und alle zugehörigen Daten wurden gemäß DSGVO Art. 17 gelöscht."})
+    response.delete_cookie("vk_access_token")
+    response.delete_cookie("vk_refresh_token")
+    return response
