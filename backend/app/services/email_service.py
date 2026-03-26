@@ -28,7 +28,7 @@ FONT           = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,A
 
 
 def _email_wrapper(content: str, app_name: str = "VereinsKasse", tagline: str = "Kassenverwaltung für Ihren Verein") -> str:
-    year = datetime.now().year
+    year = datetime.now(timezone.utc).year
     return f"""<!DOCTYPE html>
 <html lang="de">
 <head>
