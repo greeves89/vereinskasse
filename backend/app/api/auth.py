@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response, Cookie
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
 from datetime import timedelta, datetime, timezone
+from collections import defaultdict
 import secrets
 import logging
+import time
 
 from app.database import get_db
 from app.models.user import User
@@ -24,6 +26,28 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# In-memory rate limiter for auth endpoints: max attempts per IP per 15 minutes
+_auth_attempts: dict[str, list[float]] = defaultdict(list)
+_LOGIN_LIMIT = 10
+_REGISTER_LIMIT = 5
+_AUTH_WINDOW = 15 * 60  # 15 minutes
+
+
+def _check_auth_rate_limit(request: Request, limit: int):
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    window_start = now - _AUTH_WINDOW
+    attempts = [t for t in _auth_attempts[ip] if t > window_start]
+    _auth_attempts[ip] = attempts
+    if len(attempts) >= limit:
+        retry_after = int(_AUTH_WINDOW - (now - attempts[0]))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Zu viele Versuche. Bitte in {retry_after // 60} Minuten erneut versuchen.",
+        )
+    _auth_attempts[ip].append(now)
+
+
 COOKIE_SETTINGS = {
     "httponly": True,
     "samesite": "lax",
@@ -32,7 +56,8 @@ COOKIE_SETTINGS = {
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, response: Response, db: AsyncSession = Depends(get_db)):
+async def register(request: Request, user_data: UserCreate, response: Response, db: AsyncSession = Depends(get_db)):
+    _check_auth_rate_limit(request, _REGISTER_LIMIT)
     result = await db.execute(select(User).where(User.email == user_data.email.lower()))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="E-Mail bereits registriert")
@@ -74,7 +99,8 @@ async def register(user_data: UserCreate, response: Response, db: AsyncSession =
 
 
 @router.post("/login")
-async def login(login_data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+async def login(request: Request, login_data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+    _check_auth_rate_limit(request, _LOGIN_LIMIT)
     result = await db.execute(select(User).where(User.email == login_data.email.lower()))
     user = result.scalar_one_or_none()
 
